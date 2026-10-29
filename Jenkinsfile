@@ -4,6 +4,9 @@ pipeline {
    tools {
     nodejs 'Node'
 }
+environment {
+        BASE_URL = 'https://demo.hospify.pro'
+    }
 
     stages {
 
