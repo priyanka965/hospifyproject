@@ -35,28 +35,62 @@ test.beforeEach(async ({ page }) => {
 // });
 
 
-test("call next patient", async ({ page, lgnpage, dctrpage }) => {
+// test("call next patient", async ({ page, lgnpage, dctrpage }) => {
    
 
+//     await lgnpage.doctorBtn.click();
+
+//     await expect(dctrpage.callnextpatientbtn).toBeVisible();
+
+//     await dctrpage.callnextpatientbtn.click();
+
+//     await page.waitForTimeout(2000);
+//      await dctrpage.patientsummary.waitFor({
+//         state: "visible",
+//         timeout: 10000
+//     });
+
+//     console.log("Patient summary found");
+
+//    await dctrpage.patientsummary.click();
+
+//    await dctrpage.advicebtn.click();
+//    await dctrpage.finishbtn.click();
+//  });
+test("call next patient", async ({ lgnpage, dctrpage }) => {
+
+    // Login as Doctor
     await lgnpage.doctorBtn.click();
 
+    // Verify Call Next Patient button
     await expect(dctrpage.callnextpatientbtn).toBeVisible();
 
+    console.log("Call Next button is visible");
+
+    // Click Call Next Patient
     await dctrpage.callnextpatientbtn.click();
 
-    await page.waitForTimeout(2000);
-     await dctrpage.patientsummary.waitFor({
-        state: "visible",
+    console.log("Call Next button clicked successfully");
+
+    // Verify Patient Summary
+    await expect(dctrpage.patientsummary).toBeVisible({
         timeout: 10000
     });
 
-    console.log("Patient summary found");
+    console.log("Patient Summary is displayed");
 
-   await dctrpage.patientsummary.click();
+    // Verify Finish button
+    await expect(dctrpage.finishbtn).toBeVisible({
+        timeout: 10000
+    });
 
-   await dctrpage.advicebtn.click();
-   await dctrpage.finishbtn.click();
- });
+    console.log("Finish button is visible");
+
+    // Click Finish
+    await dctrpage.finishbtn.click();
+
+    console.log("Patient visit finished successfully");
+});
 
    
 
