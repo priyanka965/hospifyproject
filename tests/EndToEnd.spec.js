@@ -16,6 +16,8 @@ import testData1 from "../testData/PatientData.json"
 test.beforeEach(async ({ page }) => {
     console.log("BASE_URL:", process.env.BASE_URL);
     await page.goto(process.env.BASE_URL);
+    console.log("Logged in");
+    
 });
 
 test.afterEach(async ({ lgoutpage  }) => {
