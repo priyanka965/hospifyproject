@@ -1,11 +1,12 @@
 pipeline {
     agent any
 
-   tools {
-    nodejs 'Node'
-}
-environment {
-        BASE_URL = 'https://demo.hospify.pro'
+    tools {
+        nodejs 'Node'
+    }
+
+    environment {
+        BASE_URL = 'https://demo.hospify.pro/login'
     }
 
     stages {
@@ -19,29 +20,109 @@ environment {
             }
         }
 
-        stage('Install Dependencies') {
-            steps {
-                bat 'npm install'
+        stage('Run Shards in Parallel') {
+
+            parallel {
+
+                stage('Shard 1') {
+                    steps {
+                        dir('shard-1') {
+                            checkout scm
+
+                            bat 'npm install'
+                            bat 'npx playwright install chromium'
+
+                            script {
+                                def result = bat(
+                                    script: 'npx playwright test --shard=1/3 --reporter=blob',
+                                    returnStatus: true
+                                )
+
+                                stash(
+                                    name: 'blob-shard-1',
+                                    includes: 'blob-report/**',
+                                    allowEmpty: true
+                                )
+
+                                if (result != 0) {
+                                    error('Shard 1 failed')
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Shard 2') {
+                    steps {
+                        dir('shard-2') {
+                            checkout scm
+
+                            bat 'npm install'
+                            bat 'npx playwright install chromium'
+
+                            script {
+                                def result = bat(
+                                    script: 'npx playwright test --shard=2/3 --reporter=blob',
+                                    returnStatus: true
+                                )
+
+                                stash(
+                                    name: 'blob-shard-2',
+                                    includes: 'blob-report/**',
+                                    allowEmpty: true
+                                )
+
+                                if (result != 0) {
+                                    error('Shard 2 failed')
+                                }
+                            }
+                        }
+                    }
+                }
+
+                stage('Shard 3') {
+                    steps {
+                        dir('shard-3') {
+                            checkout scm
+
+                            bat 'npm install'
+                            bat 'npx playwright install chromium'
+
+                            script {
+                                def result = bat(
+                                    script: 'npx playwright test --shard=3/3 --reporter=blob',
+                                    returnStatus: true
+                                )
+
+                                stash(
+                                    name: 'blob-shard-3',
+                                    includes: 'blob-report/**',
+                                    allowEmpty: true
+                                )
+
+                                if (result != 0) {
+                                    error('Shard 3 failed')
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        stage('Install Playwright Browser') {
-            steps {
-                bat 'npx playwright install chromium'
-            }
-        }
-
-        stage('Run Tests') {
+        stage('Merge Shard Reports') {
             steps {
                 script {
-                    def status = bat(
-                        script: 'npx playwright test',
-                        returnStatus: true
-                    )
+                    bat 'if exist all-blob-reports rmdir /s /q all-blob-reports'
+                    bat 'mkdir all-blob-reports'
 
-                    if (status != 0) {
-                        echo "Tests failed, but continuing to generate reports..."
+                    dir('all-blob-reports') {
+                        unstash 'blob-shard-1'
+                        unstash 'blob-shard-2'
+                        unstash 'blob-shard-3'
                     }
+
+                    bat 'npx playwright merge-reports --reporter=html all-blob-reports/blob-report'
                 }
             }
         }
@@ -49,16 +130,19 @@ environment {
 
     post {
         always {
-            echo 'Generating HTML reports...'
-
-            publishHTML(target: [
-                reportDir: 'playwright-report',
-                reportFiles: 'index.html',
-                reportName: 'Playwright HTML Report',
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                allowMissing: true
-            ])
+            script {
+                if (fileExists('playwright-report/index.html')) {
+                    publishHTML(target: [
+                        reportDir: 'playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'Playwright Sharded HTML Report',
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        allowMissing: true
+                    ])
+                }
+            }
         }
     }
 }
+
