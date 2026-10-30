@@ -35,7 +35,8 @@ pipeline {
                     steps {
                         withEnv([
                             'PLAYWRIGHT_BLOB_OUTPUT_DIR=blob-report',
-                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-1.zip'
+                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-1.zip',
+                            'SHARD_ID=1'
                         ]) {
                             bat 'npx playwright test --shard=1/3 --reporter=blob'
                         }
@@ -46,7 +47,8 @@ pipeline {
                     steps {
                         withEnv([
                             'PLAYWRIGHT_BLOB_OUTPUT_DIR=blob-report',
-                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-2.zip'
+                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-2.zip',
+                            'SHARD_ID=2'
                         ]) {
                             bat 'npx playwright test --shard=2/3 --reporter=blob'
                         }
@@ -57,7 +59,8 @@ pipeline {
                     steps {
                         withEnv([
                             'PLAYWRIGHT_BLOB_OUTPUT_DIR=blob-report',
-                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-3.zip'
+                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-3.zip',
+                            'SHARD_ID=3'
                         ]) {
                             bat 'npx playwright test --shard=3/3 --reporter=blob'
                         }
