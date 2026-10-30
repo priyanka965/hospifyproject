@@ -47,39 +47,28 @@ test.afterEach(async ({ lgoutpage  }) => {
 //    await dctrpage.advicebtn.click();
 //    await dctrpage.finishbtn.click();
 //  });
-test("call next patient", async ({ lgnpage, dctrpage }) => {
+test("call next patient", async ({ page, lgnpage, dctrpage }) => {
 
-    // Login as Doctor
     await lgnpage.doctorBtn.click();
 
-    // Verify Call Next Patient button
     await expect(dctrpage.callnextpatientbtn).toBeVisible();
 
-    console.log("Call Next button is visible");
-
-    // Click Call Next Patient
     await dctrpage.callnextpatientbtn.click();
 
-    console.log("Call Next button clicked successfully");
+    await page.waitForTimeout(2000);
 
-    // Verify Patient Summary
+    console.log("Current URL:", page.url());
+console.log("Current page:", await page.locator("body").innerText());
+
     await expect(dctrpage.patientsummary).toBeVisible({
         timeout: 10000
     });
 
-    console.log("Patient Summary is displayed");
-
-    // Verify Finish button
     await expect(dctrpage.finishbtn).toBeVisible({
         timeout: 10000
     });
 
-    console.log("Finish button is visible");
-
-    // Click Finish
     await dctrpage.finishbtn.click();
-
-    console.log("Patient visit finished successfully");
 });
 
 test("patient creation", async ({
