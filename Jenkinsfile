@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -11,99 +12,54 @@ pipeline {
 
     stages {
 
-        stage('Check Node') {
+        stage('Checkout') {
             steps {
-                bat 'node -v'
-                bat 'npm -v'
-                bat 'where node'
-                bat 'where npm'
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                bat 'npm install'
+                bat 'npx playwright install chromium'
+
+                bat 'if exist blob-report rmdir /s /q blob-report'
+                bat 'if exist playwright-report rmdir /s /q playwright-report'
             }
         }
 
         stage('Run Shards in Parallel') {
-
             parallel {
 
                 stage('Shard 1') {
                     steps {
-                        dir('shard-1') {
-                            checkout scm
-
-                            bat 'npm install'
-                            bat 'npx playwright install chromium'
-
-                            script {
-                                def result = bat(
-                                    script: 'npx playwright test --shard=1/3 --reporter=blob',
-                                    returnStatus: true
-                                )
-
-                                stash(
-                                    name: 'blob-shard-1',
-                                    includes: 'blob-report/**',
-                                    allowEmpty: true
-                                )
-
-                                if (result != 0) {
-                                    error('Shard 1 failed')
-                                }
-                            }
+                        withEnv([
+                            'PLAYWRIGHT_BLOB_OUTPUT_DIR=blob-report',
+                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-1.zip'
+                        ]) {
+                            bat 'npx playwright test --shard=1/3 --reporter=blob'
                         }
                     }
                 }
 
                 stage('Shard 2') {
                     steps {
-                        dir('shard-2') {
-                            checkout scm
-
-                            bat 'npm install'
-                            bat 'npx playwright install chromium'
-
-                            script {
-                                def result = bat(
-                                    script: 'npx playwright test --shard=2/3 --reporter=blob',
-                                    returnStatus: true
-                                )
-
-                                stash(
-                                    name: 'blob-shard-2',
-                                    includes: 'blob-report/**',
-                                    allowEmpty: true
-                                )
-
-                                if (result != 0) {
-                                    error('Shard 2 failed')
-                                }
-                            }
+                        withEnv([
+                            'PLAYWRIGHT_BLOB_OUTPUT_DIR=blob-report',
+                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-2.zip'
+                        ]) {
+                            bat 'npx playwright test --shard=2/3 --reporter=blob'
                         }
                     }
                 }
 
                 stage('Shard 3') {
                     steps {
-                        dir('shard-3') {
-                            checkout scm
-
-                            bat 'npm install'
-                            bat 'npx playwright install chromium'
-
-                            script {
-                                def result = bat(
-                                    script: 'npx playwright test --shard=3/3 --reporter=blob',
-                                    returnStatus: true
-                                )
-
-                                stash(
-                                    name: 'blob-shard-3',
-                                    includes: 'blob-report/**',
-                                    allowEmpty: true
-                                )
-
-                                if (result != 0) {
-                                    error('Shard 3 failed')
-                                }
-                            }
+                        withEnv([
+                            'PLAYWRIGHT_BLOB_OUTPUT_DIR=blob-report',
+                            'PLAYWRIGHT_BLOB_OUTPUT_NAME=shard-3.zip'
+                        ]) {
+                            bat 'npx playwright test --shard=3/3 --reporter=blob'
                         }
                     }
                 }
@@ -112,18 +68,7 @@ pipeline {
 
         stage('Merge Shard Reports') {
             steps {
-                script {
-                    bat 'if exist all-blob-reports rmdir /s /q all-blob-reports'
-                    bat 'mkdir all-blob-reports'
-
-                    dir('all-blob-reports') {
-                        unstash 'blob-shard-1'
-                        unstash 'blob-shard-2'
-                        unstash 'blob-shard-3'
-                    }
-
-                    bat 'npx playwright merge-reports --reporter=html all-blob-reports/blob-report'
-                }
+                bat 'npx playwright merge-reports --reporter=html blob-report'
             }
         }
     }
@@ -145,4 +90,3 @@ pipeline {
         }
     }
 }
-
